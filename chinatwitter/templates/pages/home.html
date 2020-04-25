@@ -17,6 +17,7 @@
 			{% csrf_token %}
 			<input type="hidden" value="/" name="next" />
 			<textarea
+				required="required"
 				class="form-control"
 				name="content"
 				placeholder="What's on your mind?"
@@ -38,21 +39,28 @@
 		const url = myForm.getAttribute("action");
 		const method = myForm.getAttribute("method");
 		const xhr = new XMLHttpRequest();
+		const responseType = "json";
+		xhr.responseType = responseType;
 		xhr.open(method, url);
 		xhr.setRequestHeader("HTTP_X_REQUESTED_WITH", "XMLHttpRequest");
 		xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
 		xhr.onload = () => {
-			const serverResponse = xhr.response;
-			console.log(serverResponse);
-			const tweetsEl = document.getElementById("tweets");
-			loadTweets(tweetsEl);
+			if (xhr.status === 201) {
+				const newTweetJson = xhr.response;
+				const newTweetElement = formatTweetElement(newTweetJson);
+				const OgHtml = tweetsContainerElement.innerHTML;
+				tweetsContainerElement.innerHTML = newTweetElement + OgHtml;
+				myForm.reset();
+			} else if (xhr.status === 500) {
+				alert("There was a server error");
+			}
 		};
 		xhr.send(myFormData);
 	};
 	const tweetCreateFormEl = document.getElementById("tweet-create-form");
 	tweetCreateFormEl.addEventListener("submit", onTweetHandler);
 
-	const tweetsEl = document.getElementById("tweets");
+	const tweetsContainerElement = document.getElementById("tweets");
 
 	const loadTweets = (tweetsElement) => {
 		const xhr = new XMLHttpRequest();
@@ -79,7 +87,7 @@
 		xhr.send();
 	};
 
-	loadTweets(tweetsEl);
+	loadTweets(tweetsContainerElement);
 
 	const handleDidLike = (tweet_id, currentCount) => {
 		currentCount++;
